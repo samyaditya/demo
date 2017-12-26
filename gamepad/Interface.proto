@@ -1,0 +1,36 @@
+syntax = "proto2";
+
+//package com.demo.gamepad;
+
+option java_package = "com.demo.gamepad.hmi.Protobuf";
+option java_outer_classname = "Interface";
+option optimize_for = SPEED;
+option java_generic_services = false;
+
+enum MessageType {
+    MSG_AXIS    = 0x0001;
+    MSG_BUTTON  = 0x0002;
+    MSG_GAMEPAD = 0x0004;
+}
+
+message Axis {
+	optional MessageType    	MsgType 	= 1 [ default = MSG_AXIS ];
+	required int32				X       	= 2;	/// Range -128 to +127
+	required int32				Y       	= 3;	/// Range -128 to +127
+}
+
+message Button {
+	optional MessageType    	MsgType 	= 1 [ default = MSG_BUTTON ];
+	required bool               State 		= 2;	/// 1 when pressed, otherwise 0
+}
+
+message GamePad {
+	optional MessageType    	MsgType 	    = 1 [ default = MSG_GAMEPAD ];
+	required Axis    			Stick1   		= 2;	/// 
+	required Axis    			Stick2   		= 3;	/// 
+	required Button    			Triangle   		= 4;	/// 
+	required Button    			O   		    = 5;	/// 
+	required Button    			X   		    = 6;	/// 
+	required Button    			Square   		= 7;	/// 
+}
+
