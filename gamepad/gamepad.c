@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_joystick.h>
 #include "Interface.pb-c.h"
@@ -104,7 +108,24 @@ void freeGamePadPacket(GamePad *gp)
     }
 }
 
-void sendProtobufData(SDL_Joystick *joy)
+void sendOverSocket(uint8_t *buf, int len, char *ip, uint16_t port)
+{
+    static int sfd = -1;
+    static struct sockaddr_in sockAddr;
+    if (sfd < 0 ) {
+        sfd = socket(AF_INET,SOCK_DGRAM,0);
+        if (sfd < 0) {
+            perror("socket");
+            return;
+        }
+        sockAddr.sin_family = AF_INET;
+        sockAddr.sin_port = htons(port);
+        sockAddr.sin_addr.s_addr = inet_addr(ip);
+    }
+    sendto(sfd, buf, len, MSG_DONTWAIT, (struct sockaddr *)&sockAddr, sizeof (sockAddr));
+}
+
+void sendProtobufData(SDL_Joystick *joy, char *ip, uint16_t port)
 {
     int len = 0;
     uint8_t *buf = NULL;
@@ -113,15 +134,22 @@ void sendProtobufData(SDL_Joystick *joy)
     len = game_pad__get_packed_size(gp);
     buf = (uint8_t *)malloc(len);
     len = game_pad__pack(gp, buf);
-    // TODO send buf
+    sendOverSocket(buf, len, ip, port);
     free(buf);
     freeGamePadPacket(gp);
 }
 
 int main(int argc, char **argv)
 {
+    if (argc != 3) {
+        printf("Usage: %s <server-ip> <server-port>\n", argv[0]);
+        return -1;
+    }
+
     signal(SIGINT, sig_int);
     SDL_Joystick *joy;
+    char *serverIp = argv[1];
+    uint16_t serverPort = atoi(argv[2]);
 
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
@@ -145,16 +173,18 @@ int main(int argc, char **argv)
             printf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joy));
             printf("Number of Balls: %d\n", SDL_JoystickNumBalls(joy));
             while(1) {
-                int i;
                 SDL_JoystickUpdate();
-                //for (i = 0; i < 4; i++)
-                //    printf("Axis %d: %d\t", i, SDL_JoystickGetAxis(joy, i));
-                //for (i = 0; i < 19; i++)
-                //    printf("b%d: %d\t", i, SDL_JoystickGetButton(joy, i));
+#if 0
+                int i;
+                for (i = 0; i < 4; i++)
+                    printf("Axis %d: %d\t", i, SDL_JoystickGetAxis(joy, i));
+                for (i = 0; i < 19; i++)
+                    printf("b%d: %d\t", i, SDL_JoystickGetButton(joy, i));
+#endif
                 printAxelVals(joy);
                 printButtonVals(joy);
                 printf("\n");
-                sendProtobufData(joy);
+                sendProtobufData(joy, serverIp, serverPort);
                 usleep(20000);
             }
         } else {
