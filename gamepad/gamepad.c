@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_joystick.h>
+#include "Interface.pb-c.h"
 
 void sig_int(int sig)
 {
