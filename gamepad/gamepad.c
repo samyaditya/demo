@@ -27,11 +27,11 @@ void printAxelVals(SDL_Joystick *joy)
 #define Y1 1
 #define X2 2
 #define Y2 3
-
-    printf("X1: %6d\t", SDL_JoystickGetAxis(joy, X1));
-    printf("Y1: %6d\t", SDL_JoystickGetAxis(joy, Y1));
-    printf("X2: %6d\t", SDL_JoystickGetAxis(joy, X2));
-    printf("Y2: %6d\t", SDL_JoystickGetAxis(joy, Y2));
+    
+    printf("X1: %4d\t", SDL_JoystickGetAxis(joy, X1)/256);
+    printf("Y1: %4d\t", SDL_JoystickGetAxis(joy, Y1)/256);
+    printf("X2: %4d\t", SDL_JoystickGetAxis(joy, X2)/256);
+    printf("Y2: %4d\t", SDL_JoystickGetAxis(joy, Y2)/256);
 }
 
 int main(int argc, char **argv)
