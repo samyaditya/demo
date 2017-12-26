@@ -85,11 +85,37 @@ void fillGamepadData(GamePad *gp, SDL_Joystick *joy)
     fillButtonData(gp, joy);
 }
 
+void freeGamePadPacket(GamePad *gp)
+{
+    if (gp) {
+        if (gp->stick1)
+            free(gp->stick1);
+        if (gp->stick2)
+            free(gp->stick2);
+        if (gp->triangle)
+            free(gp->triangle);
+        if (gp->o)
+            free(gp->o);
+        if (gp->x)
+            free(gp->x);
+        if (gp->square)
+            free(gp->square);
+        free(gp);
+    }
+}
+
 void sendProtobufData(SDL_Joystick *joy)
 {
-    return; // TODO
+    int len = 0;
+    uint8_t *buf = NULL;
     GamePad *gp = newGamepadPacket();
     fillGamepadData(gp, joy);
+    len = game_pad__get_packed_size(gp);
+    buf = (uint8_t *)malloc(len);
+    len = game_pad__pack(gp, buf);
+    // TODO send buf
+    free(buf);
+    freeGamePadPacket(gp);
 }
 
 int main(int argc, char **argv)
@@ -128,6 +154,7 @@ int main(int argc, char **argv)
                 printAxelVals(joy);
                 printButtonVals(joy);
                 printf("\n");
+                sendProtobufData(joy);
                 usleep(20000);
             }
         } else {
