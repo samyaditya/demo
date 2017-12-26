@@ -4,6 +4,18 @@
 #include <SDL2/SDL_joystick.h>
 #include "Interface.pb-c.h"
 
+#define TRIANGLE 12
+#define O 13
+#define X 14
+#define SQUARE 15
+
+#define X1 0
+#define Y1 1
+#define X2 2
+#define Y2 3
+
+#define AXIS_DIVISOR(X) (X / 256)
+
 void sig_int(int sig)
 {
     exit(0);
@@ -11,28 +23,73 @@ void sig_int(int sig)
 
 void printButtonVals(SDL_Joystick *joy)
 {
-#define TRIANGLE 12
-#define O 13
-#define X 14
-#define SQUARE 15
-
     printf("/\\: %d\t", SDL_JoystickGetButton(joy, TRIANGLE));
-    printf("O: %d\t", SDL_JoystickGetButton(joy, O));
-    printf("X: %d\t", SDL_JoystickGetButton(joy, X));
-    printf("[]: %d\t", SDL_JoystickGetButton(joy, SQUARE));
+    printf("O: %d\t",   SDL_JoystickGetButton(joy, O));
+    printf("X: %d\t",   SDL_JoystickGetButton(joy, X));
+    printf("[]: %d\t",  SDL_JoystickGetButton(joy, SQUARE));
 }
 
 void printAxelVals(SDL_Joystick *joy)
 {
-#define X1 0
-#define Y1 1
-#define X2 2
-#define Y2 3
-    
-    printf("X1: %4d\t", SDL_JoystickGetAxis(joy, X1)/256);
-    printf("Y1: %4d\t", SDL_JoystickGetAxis(joy, Y1)/256);
-    printf("X2: %4d\t", SDL_JoystickGetAxis(joy, X2)/256);
-    printf("Y2: %4d\t", SDL_JoystickGetAxis(joy, Y2)/256);
+    printf("X1: %4d\t", AXIS_DIVISOR(SDL_JoystickGetAxis(joy, X1)));
+    printf("Y1: %4d\t", AXIS_DIVISOR(SDL_JoystickGetAxis(joy, Y1)));
+    printf("X2: %4d\t", AXIS_DIVISOR(SDL_JoystickGetAxis(joy, X2)));
+    printf("Y2: %4d\t", AXIS_DIVISOR(SDL_JoystickGetAxis(joy, Y2)));
+}
+
+GamePad * newGamepadPacket(void)
+{
+    GamePad *gp = (GamePad *)malloc(sizeof(GamePad));
+    game_pad__init(gp);
+
+    gp->stick1 =     (Axis *)malloc(sizeof(Axis));
+    axis__init(gp->stick1);
+
+    gp->stick2 =     (Axis *)malloc(sizeof(Axis));
+    axis__init(gp->stick2);
+
+    gp->triangle =   (Button *)malloc(sizeof(Button));
+    button__init(gp->triangle);
+
+    gp->o =          (Button *)malloc(sizeof(Button));
+    button__init(gp->o);
+
+    gp->x =          (Button *)malloc(sizeof(Button));
+    button__init(gp->x);
+
+    gp->square =     (Button *)malloc(sizeof(Button));
+    button__init(gp->square);
+
+    return gp;
+}
+
+void fillStickData(GamePad *gp, SDL_Joystick *joy)
+{
+    gp->stick1->x = AXIS_DIVISOR(SDL_JoystickGetAxis(joy, X1));
+    gp->stick1->y = AXIS_DIVISOR(SDL_JoystickGetAxis(joy, Y1));
+    gp->stick2->x = AXIS_DIVISOR(SDL_JoystickGetAxis(joy, X2));
+    gp->stick2->y = AXIS_DIVISOR(SDL_JoystickGetAxis(joy, Y2));
+}
+
+void fillButtonData(GamePad *gp, SDL_Joystick *joy)
+{
+    gp->triangle->state = SDL_JoystickGetButton(joy, TRIANGLE);
+    gp->o->state = SDL_JoystickGetButton(joy, O);
+    gp->x->state = SDL_JoystickGetButton(joy, X);
+    gp->square->state = SDL_JoystickGetButton(joy, SQUARE);
+}
+
+void fillGamepadData(GamePad *gp, SDL_Joystick *joy)
+{
+    fillStickData(gp, joy);
+    fillButtonData(gp, joy);
+}
+
+void sendProtobufData(SDL_Joystick *joy)
+{
+    return; // TODO
+    GamePad *gp = newGamepadPacket();
+    fillGamepadData(gp, joy);
 }
 
 int main(int argc, char **argv)
